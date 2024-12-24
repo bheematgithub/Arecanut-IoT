@@ -1,14 +1,16 @@
 #include <WiFi.h>
 #include <PubSubClient.h>
 
+// Device configuration
 #define SOIL_MOISTURE_PIN 35
+RTC_DATA_ATTR int moisture_device_id = 4;
 
+// WiFi credentials
 RTC_DATA_ATTR char *ssid = "byte";
 RTC_DATA_ATTR char *password = "pass1234";
 
-RTC_DATA_ATTR int moisture_device_id = 4;
-
-RTC_DATA_ATTR char *mqtt_server = "192.168.189.156";
+// MQTT configuration
+RTC_DATA_ATTR char *mqtt_server = "192.168.189.156"; // Ip address of mqtt brocker (RPi)
 RTC_DATA_ATTR int mqtt_port = 1883;
 RTC_DATA_ATTR char *mqtt_username = "arecanut";
 RTC_DATA_ATTR char *mqtt_password = "123456";
@@ -85,7 +87,7 @@ void reconnectMQTT()
   {
     Serial.print("Connecting to MQTT...");
 
-    String client_id = "moisture_client_"+String(moisture_device_id);
+    String client_id = "moisture_client_" + String(moisture_device_id);
     if (client.connect(client_id.c_str(), mqtt_username, mqtt_password))
     {
       Serial.println("Connected to MQTT broker");
@@ -107,7 +109,7 @@ void sendMoistureData()
   Serial.print("Soil Moisture: ");
   Serial.println(send_moisture);
 
-  String topic = "farm/moisture/"+String(moisture_device_id);
+  String topic = "farm/moisture/" + String(moisture_device_id);
   String payload = "{\"moisture_device_id\":" + String(moisture_device_id) + ", \"value\":" + String(send_moisture) + "}";
 
   if (client.publish(topic.c_str(), payload.c_str()))

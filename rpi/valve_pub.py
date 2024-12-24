@@ -4,24 +4,30 @@ import requests
 import time
 from datetime import datetime
 
-mqtt_broker = "localhost"
+# MQTT broker configuration
+mqtt_broker = "localhost" # Ip address of mqtt brocker (RPi)
 mqtt_port = 1883
 mqtt_username = "arecanut"
 mqtt_password = "123456"
 mqtt_sub_topic = "/farm/valve/post/#"
 mqtt_pub_topic = "/farm/valve/"
 
+# Farm identification
 farm_id = 1
 farm_key = "farm_key"
 
-cloud_url = "http://localhost:3000/iot/valve/"
+# Cloud server URL
+cloud_url = "http://{ip address of cloud server}:3000/iot/valve/"
 
+# Dictionary to track last published timestamps
 last_published_timestamps = {}
 
+# Initialize MQTT client
 client = mqtt.Client()
 client.username_pw_set(mqtt_username, mqtt_password)
 
 def fetch_data_from_cloud():
+    """Fetch valve data from the cloud server."""
     try:
         print(f"Fetching valve data from cloud...")
         data = {"farm_key": farm_key}
@@ -40,13 +46,13 @@ def fetch_data_from_cloud():
         return None
 
 def publish_data_to_mqtt(data):
+    """Publish data to the MQTT broker."""
     section_device_id = data.get("section_device_id")
     mode = data.get("valve_mode")
 
     if not section_device_id or not mode:
         print("Error: section_device_id or valve_mode not found in data.")
         return
-
 
     timestamp = data.get("timestamp")
     last_published_time = last_published_timestamps.get(section_device_id)
@@ -65,6 +71,7 @@ def publish_data_to_mqtt(data):
         print(f"Error while publishing data to MQTT: {e}")
 
 def post_data_to_cloud(section_device_id, data):
+    """Post data to the cloud server."""
     post_url = f"{cloud_url}{section_device_id}"
     data["timestamp"] = datetime.now().strftime("%Y-%m-%dT%H:%M:%S.%fZ")
     data["farm_id"] = farm_id
@@ -82,6 +89,7 @@ def post_data_to_cloud(section_device_id, data):
         print(f"Error while posting data: {e}")
 
 def on_message(client, userdata, msg):
+    """Callback function for when a message is received from the MQTT broker."""
     try:
         payload = json.loads(msg.payload.decode())
         print(f"\nReceived message on {msg.topic}: {json.dumps(payload, indent=2)}")
@@ -100,6 +108,7 @@ def on_message(client, userdata, msg):
 client.on_message = on_message
 
 def on_connect(client, userdata, flags, rc):
+    """Callback function for when the client connects to the MQTT broker."""
     if rc == 0:
         print("Connected to MQTT broker successfully!")
         client.subscribe(mqtt_sub_topic)
@@ -108,6 +117,7 @@ def on_connect(client, userdata, flags, rc):
         print(f"Failed to connect to MQTT broker, return code {rc}")
 
 def connect_mqtt():
+    """Connect to the MQTT broker."""
     try:
         print(f"Connecting to MQTT broker at {mqtt_broker}:{mqtt_port}")
         client.on_connect = on_connect
